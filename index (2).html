@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sten, Sax, Påse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#E7E5DF;
+    --surface:#F4F1EA;
+    --ink:#1A1917;
+    --muted:#8F8C83;
+    --line:#D4D1C8;
+
+    /* materialburna flödesfärger, en per resultat */
+    --sten:#736B5E;   /* mineralgrått */
+    --sax:#4E6570;    /* stålblått    */
+    --pase:#94714A;   /* kraftpapper  */
+
+    --flood:var(--bg);
+    --accent:var(--ink);
+    --on-flood:var(--ink);
+    --ring-dur:2100ms;
+
+    --font-display:"Familjen Grotesk", system-ui, sans-serif;
+    --font-mono:"DM Mono", ui-monospace, monospace;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+
+  body{
+    font-family:var(--font-display);
+    background:var(--flood);
+    color:var(--ink);
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(22px,4.5vh,46px);
+    padding:clamp(20px,4vh,40px) 20px;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    transition:background .55s cubic-bezier(.16,1,.3,1), color .55s ease;
+  }
+  body.result{color:var(--on-flood)}
+
+  /* --- Rubrik --- */
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:clamp(11px,1.5vw,14px);
+    letter-spacing:.44em;
+    text-transform:uppercase;
+    color:var(--muted);
+    padding-left:.44em;
+    transition:color .55s ease,opacity .55s ease;
+  }
+  body.result .eyebrow{color:var(--on-flood);opacity:.7}
+
+  /* --- Scen --- */
+  .stage-wrap{
+    position:relative;
+    width:clamp(300px,84vmin,720px);
+    aspect-ratio:1;
+    flex:0 0 auto;
+  }
+
+  .stage{
+    position:absolute;
+    inset:0;
+    display:grid;
+    place-items:center;
+    border:none;
+    background:var(--surface);
+    border-radius:50%;
+    cursor:pointer;
+    color:var(--ink);
+    overflow:visible;
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset,
+               0 40px 90px -50px rgba(26,25,23,.6);
+    transition:transform .5s cubic-bezier(.16,1,.3,1),
+               box-shadow .55s ease, background .55s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stage:focus-visible{outline:3px solid var(--accent);outline-offset:8px}
+  .stage:hover{transform:translateY(-3px)}
+  .stage:active{transform:translateY(0) scale(.99)}
+  body.result .stage{background:transparent;box-shadow:none;cursor:default}
+
+  /* Ring / nedräkningsspår */
+  .ring{position:absolute;inset:0;pointer-events:none;transform:rotate(-90deg);transition:opacity .5s ease}
+  .ring circle{fill:none;stroke-width:1.5}
+  .ring .track{stroke:var(--line)}
+  .ring .progress{
+    stroke:var(--accent);
+    stroke-linecap:round;
+    stroke-dasharray:var(--circ);
+    stroke-dashoffset:var(--circ);
+    opacity:0;
+    transition:stroke .3s ease;
+  }
+  .running .ring .progress{opacity:1;animation:sweep var(--ring-dur) linear forwards}
+  @keyframes sweep{to{stroke-dashoffset:0}}
+  body.result .ring{opacity:0}
+
+  /* Pulsring vid avslöjande */
+  .pulse{
+    position:absolute;inset:0;border-radius:50%;
+    border:2px solid var(--on-flood);
+    opacity:0;pointer-events:none;
+  }
+  body.result .pulse{animation:pulse .9s cubic-bezier(.16,1,.3,1)}
+  body.result .pulse.two{animation-delay:.12s}
+  @keyframes pulse{
+    0%{transform:scale(.55);opacity:.45}
+    100%{transform:scale(1.5);opacity:0}
+  }
+
+  /* Innehållslager */
+  .layer{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+
+  /* Viloläge: de tre alternativen antydda, stort */
+  .hint{display:flex;gap:clamp(20px,5vmin,50px);color:var(--muted);transition:opacity .4s ease}
+  .hint svg{width:clamp(52px,13vmin,110px);height:clamp(52px,13vmin,110px)}
+  .running .hint,body.result .hint{opacity:0}
+
+  /* Nedräkningssiffra – stor */
+  .count{
+    font-size:clamp(150px,44vmin,460px);
+    font-weight:500;
+    line-height:.9;
+    font-variant-numeric:tabular-nums;
+    opacity:0;
+    transform:scale(.7);
+  }
+  .count.tick{animation:tick .7s cubic-bezier(.16,1,.3,1)}
+  @keyframes tick{
+    0%{opacity:0;transform:scale(.65)}
+    28%{opacity:1;transform:scale(1)}
+    100%{opacity:0;transform:scale(1.18)}
+  }
+
+  /* Flimrande ikoner under nedräkning */
+  .shuffle{opacity:0}
+  .shuffle svg{width:clamp(180px,50vmin,440px);height:clamp(180px,50vmin,440px);color:rgba(26,25,23,.08)}
+  .running .shuffle{opacity:1}
+
+  /* Resultatikon – dominerande */
+  .result-icon{opacity:0;color:var(--accent)}
+  .result-icon svg{width:clamp(200px,56vmin,500px);height:clamp(200px,56vmin,500px)}
+  body.result .result-icon{animation:pop .7s cubic-bezier(.34,1.56,.64,1) forwards}
+  @keyframes pop{
+    0%{opacity:0;transform:scale(.4) rotate(-6deg)}
+    55%{opacity:1}
+    100%{opacity:1;transform:scale(1) rotate(0)}
+  }
+
+  /* --- Etikett + knapp --- */
+  .controls{
+    display:flex;flex-direction:column;align-items:center;
+    gap:clamp(14px,2.5vh,24px);flex:0 0 auto;
+  }
+  .readout{min-height:clamp(40px,7vh,72px);display:flex;align-items:center}
+  .label{
+    font-size:clamp(30px,7.5vmin,78px);
+    font-weight:700;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    padding-left:.24em;
+    line-height:1;
+    color:var(--accent);
+    opacity:0;
+    transform:translateY(10px);
+  }
+  body.result .label{animation:rise .55s cubic-bezier(.16,1,.3,1) .15s forwards}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+  .btn{
+    font-family:var(--font-display);
+    font-size:clamp(15px,1.8vw,18px);
+    font-weight:600;
+    letter-spacing:.08em;
+    color:var(--surface);
+    background:var(--ink);
+    border:none;border-radius:999px;
+    padding:clamp(15px,1.8vh,20px) clamp(38px,5vw,52px);
+    cursor:pointer;
+    transition:background .3s ease,transform .2s ease,color .3s ease,opacity .3s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:hover{background:#000}
+  .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  .btn:disabled{opacity:.35;cursor:default;transform:none}
+  body.result .btn{background:var(--surface);color:var(--ink)}
+  body.result .btn:hover{background:#fff}
+
+  .note{
+    font-family:var(--font-mono);
+    font-size:clamp(10px,1.3vw,12px);
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+    transition:color .55s ease,opacity .55s ease;
+  }
+  body.result .note{color:var(--on-flood);opacity:.6}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important}
+    .count.tick{animation-duration:.5s}
+    .running .ring .progress{animation-duration:1.5s}
+    body.result .pulse{animation:none}
+  }
+</style>
+</head>
+<body>
+  <p class="eyebrow">Sten · Sax · Påse</p>
+
+  <div class="stage-wrap">
+    <button class="stage" id="stage" aria-label="Slumpa sten, sax eller påse">
+      <div class="layer hint" aria-hidden="true">
+        <span data-icon="sten"></span>
+        <span data-icon="sax"></span>
+        <span data-icon="pase"></span>
+      </div>
+      <div class="layer shuffle" id="shuffle" aria-hidden="true"></div>
+      <div class="layer"><div class="count" id="count" aria-hidden="true"></div></div>
+      <div class="layer result-icon" id="resultIcon" aria-hidden="true"></div>
+    </button>
+
+    <svg class="ring" id="ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="track" cx="50" cy="50" r="49"></circle>
+      <circle class="progress" cx="50" cy="50" r="49"></circle>
+    </svg>
+    <span class="pulse" aria-hidden="true"></span>
+    <span class="pulse two" aria-hidden="true"></span>
+  </div>
+
+  <div class="controls">
+    <div class="readout">
+      <span class="label" id="label" role="status" aria-live="polite"></span>
+    </div>
+    <button class="btn" id="btn">Slumpa</button>
+    <p class="note">Resultatet är slumpmässigt</p>
+  </div>
+
+<script>
+(() => {
+  const OPTIONS = [
+    { key:"sten", label:"Sten", flood:"var(--sten)" },
+    { key:"sax",  label:"Sax",  flood:"var(--sax)"  },
+    { key:"pase", label:"Påse", flood:"var(--pase)" },
+  ];
+
+  const ICONS = {
+    sten:`<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M29 60C21 51 24 37 37 32C47 28 59 25 69 34C79 43 78 59 69 67C58 76 39 71 29 60Z"/>
+      <path d="M41 44C49 40 59 41 64 47"/>
+    </svg>`,
+    sax:`<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+      <circle cx="33" cy="68" r="8"/>
+      <circle cx="57" cy="71" r="8"/>
+      <path d="M40 63L76 27"/>
+      <path d="M51 65L26 30"/>
+      <circle cx="49" cy="55" r="2" fill="currentColor" stroke="none"/>
+    </svg>`,
+    pase:`<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M31 41L31 74C31 77 33 79 36 79L64 79C67 79 69 77 69 74L69 41"/>
+      <path d="M29 41L34 31L66 31L71 41Z"/>
+      <path d="M31 41L69 41"/>
+      <path d="M50 31L50 41"/>
+    </svg>`,
+  };
+
+  document.querySelectorAll('[data-icon]').forEach(el=>{ el.innerHTML = ICONS[el.dataset.icon]; });
+
+  const stage   = document.getElementById('stage');
+  const btn      = document.getElementById('btn');
+  const countEl  = document.getElementById('count');
+  const shuffle  = document.getElementById('shuffle');
+  const resIcon  = document.getElementById('resultIcon');
+  const label    = document.getElementById('label');
+  const ring     = document.getElementById('ring');
+  const root     = document.documentElement;
+
+  const r = 49, circ = 2 * Math.PI * r;
+  ring.style.setProperty('--circ', circ.toFixed(2));
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let running = false;
+
+  const rand = () => OPTIONS[Math.floor(Math.random() * OPTIONS.length)];
+
+  function reset(){
+    document.body.classList.remove('running','result');
+    stage.classList.remove('running');
+    resIcon.innerHTML = '';
+    label.textContent = '';
+    countEl.textContent = '';
+    countEl.classList.remove('tick');
+    root.style.setProperty('--flood','var(--bg)');
+    root.style.setProperty('--accent','var(--ink)');
+    root.style.setProperty('--on-flood','var(--ink)');
+  }
+
+  function play(){
+    if (running) return;
+    running = true;
+    btn.disabled = true;
+
+    reset();
+    // tvinga omflöde så eventuella result-animationer nollställs
+    void document.body.offsetWidth;
+    document.body.classList.add('running');
+    stage.classList.add('running');
+
+    let flick;
+    if (!reduce){
+      flick = setInterval(()=>{ shuffle.innerHTML = ICONS[rand().key]; }, 80);
+    }
+
+    const steps = [3,2,1];
+    let i = 0;
+    const stepDur = reduce ? 500 : 700;
+
+    function tick(){
+      countEl.classList.remove('tick');
+      void countEl.offsetWidth;
+      countEl.textContent = steps[i];
+      countEl.classList.add('tick');
+      i++;
+      if (i < steps.length) setTimeout(tick, stepDur);
+      else setTimeout(reveal, stepDur);
+    }
+
+    function reveal(){
+      if (flick) clearInterval(flick);
+      shuffle.innerHTML = '';
+      countEl.textContent = '';
+      countEl.classList.remove('tick');
+
+      const pick = rand();
+      root.style.setProperty('--flood', pick.flood);
+      root.style.setProperty('--accent', 'var(--surface)');
+      root.style.setProperty('--on-flood', 'var(--surface)');
+      resIcon.innerHTML = ICONS[pick.key];
+      label.textContent = pick.label;
+
+      document.body.classList.remove('running');
+      stage.classList.remove('running');
+      document.body.classList.add('result');
+
+      btn.textContent = 'Slumpa igen';
+      btn.disabled = false;
+      running = false;
+    }
+
+    tick();
+  }
+
+  stage.addEventListener('click', play);
+  btn.addEventListener('click', play);
+})();
+</script>
+</body>
+</html>
