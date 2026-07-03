@@ -23,7 +23,7 @@
     --flood:var(--bg);
     --accent:var(--ink);
     --on-flood:var(--ink);
-    --ring-dur:2100ms;
+    --ring-dur:3150ms;
 
     --font-display:"Familjen Grotesk", system-ui, sans-serif;
     --font-mono:"DM Mono", ui-monospace, monospace;
@@ -41,8 +41,8 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:clamp(22px,4.5vh,46px);
-    padding:clamp(20px,4vh,40px) 20px;
+    gap:clamp(14px,3vh,30px);
+    padding:clamp(14px,3vh,30px) 20px;
     overflow:hidden;
     -webkit-font-smoothing:antialiased;
     text-rendering:optimizeLegibility;
@@ -65,9 +65,10 @@
   /* --- Scen --- */
   .stage-wrap{
     position:relative;
-    width:clamp(300px,84vmin,720px);
+    width:min(90vw,56vh,600px);
     aspect-ratio:1;
     flex:0 0 auto;
+    container-type:size;
   }
 
   .stage{
@@ -125,34 +126,35 @@
   .layer{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
 
   /* Viloläge: de tre alternativen antydda, stort */
-  .hint{display:flex;gap:clamp(20px,5vmin,50px);color:var(--muted);transition:opacity .4s ease}
-  .hint svg{width:clamp(52px,13vmin,110px);height:clamp(52px,13vmin,110px)}
+  .hint{display:flex;gap:6cqmin;color:var(--muted);transition:opacity .4s ease}
+  .hint svg{width:16cqmin;height:16cqmin}
   .running .hint,body.result .hint{opacity:0}
 
   /* Nedräkningssiffra – stor */
   .count{
-    font-size:clamp(150px,44vmin,460px);
+    font-size:52cqmin;
     font-weight:500;
     line-height:.9;
     font-variant-numeric:tabular-nums;
     opacity:0;
     transform:scale(.7);
   }
-  .count.tick{animation:tick .7s cubic-bezier(.16,1,.3,1)}
+  .count.tick{animation:tick .95s cubic-bezier(.16,1,.3,1)}
   @keyframes tick{
     0%{opacity:0;transform:scale(.65)}
-    28%{opacity:1;transform:scale(1)}
-    100%{opacity:0;transform:scale(1.18)}
+    22%{opacity:1;transform:scale(1)}
+    75%{opacity:1;transform:scale(1.04)}
+    100%{opacity:0;transform:scale(1.16)}
   }
 
   /* Flimrande ikoner under nedräkning */
   .shuffle{opacity:0}
-  .shuffle svg{width:clamp(180px,50vmin,440px);height:clamp(180px,50vmin,440px);color:rgba(26,25,23,.08)}
+  .shuffle svg{width:56cqmin;height:56cqmin;color:rgba(26,25,23,.08)}
   .running .shuffle{opacity:1}
 
   /* Resultatikon – dominerande */
   .result-icon{opacity:0;color:var(--accent)}
-  .result-icon svg{width:clamp(200px,56vmin,500px);height:clamp(200px,56vmin,500px)}
+  .result-icon svg{width:64cqmin;height:64cqmin}
   body.result .result-icon{animation:pop .7s cubic-bezier(.34,1.56,.64,1) forwards}
   @keyframes pop{
     0%{opacity:0;transform:scale(.4) rotate(-6deg)}
@@ -326,7 +328,7 @@
 
     const steps = [3,2,1];
     let i = 0;
-    const stepDur = reduce ? 500 : 700;
+    const stepDur = reduce ? 750 : 1050;
 
     function tick(){
       countEl.classList.remove('tick');
